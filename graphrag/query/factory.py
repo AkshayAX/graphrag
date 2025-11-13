@@ -3,6 +3,8 @@
 
 """Query Factory methods to support CLI."""
 
+from uuid import UUID
+
 from graphrag.callbacks.query_callbacks import QueryCallbacks
 from graphrag.config.models.graph_rag_config import GraphRagConfig
 from graphrag.data_model.community import Community
@@ -16,6 +18,7 @@ from graphrag.language_model.providers.fnllm.utils import (
     get_openai_model_parameters_from_config,
 )
 from graphrag.query.context_builder.entity_extraction import EntityVectorStoreKey
+from graphrag.query.filters.access_control import AccessControlFilter
 from graphrag.query.structured_search.basic_search.basic_context import (
     BasicSearchContext,
 )
@@ -299,5 +302,227 @@ def get_basic_search_engine(
             "k": bs_config.k,
             "max_context_tokens": bs_config.max_context_tokens,
         },
+        callbacks=callbacks,
+    )
+
+
+# Access Control Wrapper Functions
+
+
+def get_local_search_engine_with_access_control(
+    config: GraphRagConfig,
+    reports: list[CommunityReport],
+    text_units: list[TextUnit],
+    entities: list[Entity],
+    relationships: list[Relationship],
+    covariates: dict[str, list[Covariate]],
+    response_type: str,
+    description_embedding_store: BaseVectorStore,
+    user_id: str | UUID | None = None,
+    user_domains: list[str] | None = None,
+    system_prompt: str | None = None,
+    callbacks: list[QueryCallbacks] | None = None,
+) -> LocalSearch:
+    """Create a local search engine with access control filtering.
+
+    Args:
+        config: GraphRAG configuration
+        reports: List of community reports
+        text_units: List of text units
+        entities: List of entities
+        relationships: List of relationships
+        covariates: Dictionary of covariates
+        response_type: Type of response expected
+        description_embedding_store: Vector store for entity descriptions
+        user_id: ID of the current user (for private document access)
+        user_domains: List of domain tags the user has access to
+        system_prompt: Optional custom system prompt
+        callbacks: Optional query callbacks
+
+    Returns:
+        LocalSearch instance with access-controlled data
+    """
+    # Create access control filter
+    access_filter = AccessControlFilter(user_id=user_id, user_domains=user_domains)
+
+    # Filter data based on access control
+    filtered_text_units, filtered_entities, filtered_relationships = (
+        access_filter.filter_context_data(
+            text_units=text_units,
+            entities=entities,
+            relationships=relationships,
+        )
+    )
+
+    # Create search engine with filtered data
+    return get_local_search_engine(
+        config=config,
+        reports=reports,
+        text_units=filtered_text_units,
+        entities=filtered_entities,
+        relationships=filtered_relationships,
+        covariates=covariates,
+        response_type=response_type,
+        description_embedding_store=description_embedding_store,
+        system_prompt=system_prompt,
+        callbacks=callbacks,
+    )
+
+
+def get_global_search_engine_with_access_control(
+    config: GraphRagConfig,
+    reports: list[CommunityReport],
+    entities: list[Entity],
+    communities: list[Community],
+    response_type: str,
+    user_id: str | UUID | None = None,
+    user_domains: list[str] | None = None,
+    dynamic_community_selection: bool = False,
+    map_system_prompt: str | None = None,
+    reduce_system_prompt: str | None = None,
+    general_knowledge_inclusion_prompt: str | None = None,
+    callbacks: list[QueryCallbacks] | None = None,
+) -> GlobalSearch:
+    """Create a global search engine with access control filtering.
+
+    Args:
+        config: GraphRAG configuration
+        reports: List of community reports
+        entities: List of entities
+        communities: List of communities
+        response_type: Type of response expected
+        user_id: ID of the current user (for private document access)
+        user_domains: List of domain tags the user has access to
+        dynamic_community_selection: Whether to use dynamic community selection
+        map_system_prompt: Optional custom map system prompt
+        reduce_system_prompt: Optional custom reduce system prompt
+        general_knowledge_inclusion_prompt: Optional general knowledge prompt
+        callbacks: Optional query callbacks
+
+    Returns:
+        GlobalSearch instance with access-controlled data
+    """
+    # Create access control filter
+    access_filter = AccessControlFilter(user_id=user_id, user_domains=user_domains)
+
+    # Filter entities (global search primarily uses entities and community reports)
+    filtered_entities = access_filter.filter_entities_by_source(
+        entities=entities,
+        accessible_text_unit_ids=set(),  # Global search doesn't directly use text units
+    )
+
+    # Note: Community reports aggregation may need special handling
+    # For now, we filter entities which affects which communities are relevant
+
+    return get_global_search_engine(
+        config=config,
+        reports=reports,
+        entities=filtered_entities,
+        communities=communities,
+        response_type=response_type,
+        dynamic_community_selection=dynamic_community_selection,
+        map_system_prompt=map_system_prompt,
+        reduce_system_prompt=reduce_system_prompt,
+        general_knowledge_inclusion_prompt=general_knowledge_inclusion_prompt,
+        callbacks=callbacks,
+    )
+
+
+def get_drift_search_engine_with_access_control(
+    config: GraphRagConfig,
+    reports: list[CommunityReport],
+    text_units: list[TextUnit],
+    entities: list[Entity],
+    relationships: list[Relationship],
+    description_embedding_store: BaseVectorStore,
+    response_type: str,
+    user_id: str | UUID | None = None,
+    user_domains: list[str] | None = None,
+    local_system_prompt: str | None = None,
+    reduce_system_prompt: str | None = None,
+    callbacks: list[QueryCallbacks] | None = None,
+) -> DRIFTSearch:
+    """Create a DRIFT search engine with access control filtering.
+
+    Args:
+        config: GraphRAG configuration
+        reports: List of community reports
+        text_units: List of text units
+        entities: List of entities
+        relationships: List of relationships
+        description_embedding_store: Vector store for entity descriptions
+        response_type: Type of response expected
+        user_id: ID of the current user (for private document access)
+        user_domains: List of domain tags the user has access to
+        local_system_prompt: Optional custom local system prompt
+        reduce_system_prompt: Optional custom reduce system prompt
+        callbacks: Optional query callbacks
+
+    Returns:
+        DRIFTSearch instance with access-controlled data
+    """
+    # Create access control filter
+    access_filter = AccessControlFilter(user_id=user_id, user_domains=user_domains)
+
+    # Filter data based on access control
+    filtered_text_units, filtered_entities, filtered_relationships = (
+        access_filter.filter_context_data(
+            text_units=text_units,
+            entities=entities,
+            relationships=relationships,
+        )
+    )
+
+    return get_drift_search_engine(
+        config=config,
+        reports=reports,
+        text_units=filtered_text_units,
+        entities=filtered_entities,
+        relationships=filtered_relationships,
+        description_embedding_store=description_embedding_store,
+        response_type=response_type,
+        local_system_prompt=local_system_prompt,
+        reduce_system_prompt=reduce_system_prompt,
+        callbacks=callbacks,
+    )
+
+
+def get_basic_search_engine_with_access_control(
+    text_units: list[TextUnit],
+    text_unit_embeddings: BaseVectorStore,
+    config: GraphRagConfig,
+    user_id: str | UUID | None = None,
+    user_domains: list[str] | None = None,
+    system_prompt: str | None = None,
+    response_type: str = "multiple paragraphs",
+    callbacks: list[QueryCallbacks] | None = None,
+) -> BasicSearch:
+    """Create a basic search engine with access control filtering.
+
+    Args:
+        text_units: List of text units
+        text_unit_embeddings: Vector store for text unit embeddings
+        config: GraphRAG configuration
+        user_id: ID of the current user (for private document access)
+        user_domains: List of domain tags the user has access to
+        system_prompt: Optional custom system prompt
+        response_type: Type of response expected
+        callbacks: Optional query callbacks
+
+    Returns:
+        BasicSearch instance with access-controlled data
+    """
+    # Create access control filter
+    access_filter = AccessControlFilter(user_id=user_id, user_domains=user_domains)
+
+    # Filter text units
+    filtered_text_units = access_filter.filter_text_units(text_units)
+
+    return get_basic_search_engine(
+        text_units=filtered_text_units,
+        text_unit_embeddings=text_unit_embeddings,
+        config=config,
+        system_prompt=system_prompt,
+        response_type=response_type,
         callbacks=callbacks,
     )

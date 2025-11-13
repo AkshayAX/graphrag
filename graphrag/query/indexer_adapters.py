@@ -35,10 +35,18 @@ logger = logging.getLogger(__name__)
 
 def read_indexer_text_units(final_text_units: pd.DataFrame) -> list[TextUnit]:
     """Read in the Text Units from the raw indexing outputs."""
+    # Include access control fields as attributes
+    access_control_attrs = ["access_type", "owner_id", "access_domains", "source"]
+    # Only include attributes that exist in the dataframe
+    available_attrs = [
+        attr for attr in access_control_attrs if attr in final_text_units.columns
+    ]
+
     return read_text_units(
         df=final_text_units,
         # expects a covariate map of type -> ids
         covariates_col=None,
+        attributes_cols=available_attrs if available_attrs else None,
     )
 
 
