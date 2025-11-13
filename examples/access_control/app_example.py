@@ -7,7 +7,7 @@
 from pathlib import Path
 
 import pandas as pd
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 
 from graphrag.config.load_config import load_config
 from graphrag.query.factory import get_local_search_engine_with_access_control
@@ -19,7 +19,7 @@ from graphrag.query.indexer_adapters import (
 )
 from graphrag.utils.storage import PipelineStorage
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 # Global variables to hold loaded data
 config = None
@@ -273,7 +273,13 @@ def stats():
 
 @app.route("/", methods=["GET"])
 def home():
-    """Home page with API documentation."""
+    """Serve the web UI."""
+    return send_from_directory('static', 'index.html')
+
+
+@app.route("/api/docs", methods=["GET"])
+def api_docs():
+    """API documentation."""
     return """
     <html>
     <head><title>GraphRAG Access Control API</title></head>
@@ -281,6 +287,7 @@ def home():
         <h1>GraphRAG Access Control API</h1>
         <h2>Endpoints</h2>
         <ul>
+            <li><strong>GET /</strong> - Web UI</li>
             <li><strong>POST /api/query</strong> - Query with access control</li>
             <li><strong>GET /api/users</strong> - List test users</li>
             <li><strong>GET /api/stats</strong> - Get data statistics</li>
