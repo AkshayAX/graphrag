@@ -9,6 +9,16 @@ The access control system allows you to:
 - **Filter query results** based on user permissions at query time
 - **Control data access** using three access levels: public, domain, and private
 
+## Quick Start Scripts
+
+This directory includes utility scripts to get started quickly:
+
+- **`setup_searchdb.py`** - Creates a test MongoDB database with 2 sample documents
+- **`setup_searchdb_extended.py`** - Creates a test MongoDB database with 10 comprehensive sample documents
+- **`mongodb_export.py`** - Exports MongoDB documents to JSON/JSONL/CSV for GraphRAG
+- **`quick_start.py`** - Creates a complete sample project with test data
+- **`app_example.py`** - Flask web application with UI for testing access control
+
 ## Access Control Model
 
 ### Access Types
@@ -38,6 +48,24 @@ The access control system allows you to:
 ```
 
 ## Setup
+
+### 0. Quick Setup with Test Database (Optional)
+
+If you want to test the system immediately without your own data:
+
+```bash
+# Install MongoDB Python driver
+pip install pymongo
+
+# Option A: Create simple test database (2 documents)
+python setup_searchdb.py
+
+# Option B: Create extended test database (10 documents)
+python setup_searchdb_extended.py
+
+# The scripts will create a MongoDB database named 'searchdb'
+# with collection 'documents' containing test data
+```
 
 ### 1. MongoDB Document Schema
 
