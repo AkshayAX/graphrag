@@ -71,7 +71,17 @@ class AccessControlFilter:
             if isinstance(doc_domains, str):
                 # Handle case where domains might be stored as comma-separated string
                 doc_domains = [d.strip() for d in doc_domains.split(",")]
-            doc_domains_set = set(doc_domains) if doc_domains else set()
+
+            # Convert to set, handling numpy arrays and other iterable types
+            try:
+                if doc_domains is not None and len(doc_domains) > 0:
+                    doc_domains_set = set(doc_domains)
+                else:
+                    doc_domains_set = set()
+            except (TypeError, ValueError):
+                # If conversion fails, treat as empty
+                doc_domains_set = set()
+
             return bool(self.user_domains & doc_domains_set)  # Any overlap grants access
 
         # Unknown access type - deny by default for security
