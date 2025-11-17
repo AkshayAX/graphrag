@@ -23,7 +23,50 @@ from graphrag.query.indexer_adapters import (
     read_indexer_reports,
     read_indexer_text_units,
 )
-from graphrag.vector_stores.lancedb import LanceDBVectorStore
+from graphrag.vector_stores.base import BaseVectorStore, VectorStoreSearchResult
+
+
+class MockVectorStore(BaseVectorStore):
+    """Mock vector store that returns empty results."""
+
+    def __init__(self):
+        """Initialize without config."""
+        # Skip BaseVectorStore.__init__ to avoid needing config
+        self.db_connection = None
+        self.document_collection = None
+        self.query_filter = None
+        self.kwargs = {}
+        self.index_name = "mock"
+        self.id_field = "id"
+        self.text_field = "text"
+        self.vector_field = "vector"
+        self.attributes_field = "attributes"
+        self.vector_size = 1536
+
+    def connect(self, **kwargs):
+        """No-op connect."""
+        pass
+
+    def load_documents(self, documents, overwrite=True):
+        """No-op load."""
+        pass
+
+    def similarity_search_by_vector(self, query_embedding, k=10, **kwargs):
+        """Return empty results."""
+        return []
+
+    def similarity_search_by_text(self, text, text_embedder=None, k=10, **kwargs):
+        """Return empty results."""
+        return []
+
+    def filter_by_id(self, include_ids):
+        """No-op filter."""
+        return None
+
+    def search_by_id(self, id):
+        """No-op search."""
+        return None
+
 
 app = FastAPI(title="GraphRAG Access Control Demo", version="1.0.0")
 
@@ -138,20 +181,10 @@ def load_graphrag_data(root_path: str):
         reports_df, communities_df, community_level=2, config=config
     )
 
-    # Load vector store for entity descriptions
-    try:
-        lancedb_dir = Path(root_path) / "output" / "lancedb"
-        if lancedb_dir.exists():
-            print(f"Loading vector store from: {lancedb_dir}")
-            description_embedding_store = LanceDBVectorStore(db_uri=str(lancedb_dir))
-            description_embedding_store.connect(db_uri=str(lancedb_dir))
-            print(f"✓ Loaded vector store")
-        else:
-            print(f"⚠ Vector store not found at {lancedb_dir}, will skip entity description search")
-            description_embedding_store = None
-    except Exception as e:
-        print(f"⚠ Failed to load vector store: {e}, will skip entity description search")
-        description_embedding_store = None
+    # Use mock vector store for simplified setup
+    # The search engine will work but won't use entity description similarity
+    print(f"⚠ Using mock vector store (entity description similarity disabled)")
+    description_embedding_store = MockVectorStore()
 
     print(f"✓ Loaded {len(text_units)} text units")
     print(f"✓ Loaded {len(entities)} entities")
