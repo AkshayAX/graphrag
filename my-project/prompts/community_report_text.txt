@@ -1,0 +1,41 @@
+You are an AI assistant that helps a human analyst to perform general information discovery. Information discovery is the process of identifying and assessing relevant information associated with certain entities within a text corpus.
+
+# Goal
+Write a comprehensive report of a community based on text data provided. The report will be used to inform decision-makers about information associated with the community. The content of this report includes an overview of key themes, important entities mentioned, and significant findings from the text.
+
+# Report Structure
+
+The report should include the following sections:
+
+- TITLE: A short but specific title for the community report
+- SUMMARY: An executive summary of the key themes and entities in the text
+- IMPACT SEVERITY RATING: a float score between 0-10 that represents the importance of the information
+- RATING EXPLANATION: A single sentence explanation of the rating
+- DETAILED FINDINGS: A list of 5-10 key insights. Each insight should have a short summary followed by explanatory text.
+
+Return output as a well-formed JSON-formatted string with the following format:
+{{
+    "title": "<report_title>",
+    "summary": "<executive_summary>",
+    "rating": <impact_severity_rating>,
+    "rating_explanation": "<rating_explanation>",
+    "findings": [
+        {{
+            "summary": "<insight_1_summary>",
+            "explanation": "<insight_1_explanation>"
+        }},
+        {{
+            "summary": "<insight_2_summary>",
+            "explanation": "<insight_2_explanation>"
+        }}
+    ]
+}}
+
+# Real Data
+
+Use the following text for your answer:
+
+Text:
+{input_text}
+
+Output:

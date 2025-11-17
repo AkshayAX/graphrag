@@ -1,0 +1,18 @@
+
+-Goal-
+Given a text document, identify all claims or factual statements that could be relevant for information discovery.
+
+-Steps-
+1. Read through the text carefully.
+2. Identify factual claims, assertions, or statements.
+3. For each claim, extract:
+   - subject: The main subject of the claim
+   - object: What the claim is about
+   - type: Type of claim (fact, opinion, statistic, etc.)
+   - description: Full description of the claim
+   - source_text: The original text making this claim
+
+######################
+Text: {input_text}
+######################
+Output:

@@ -27,8 +27,13 @@ models:
 
 # Input configuration
 input:
-  type: json
-  metadata: ["access_type", "owner_id", "access_domains", "source"]
+  type: file
+  file_type: json
+  base_dir: "input"
+  encoding: "utf-8"
+  document_attribute_columns: ["id", "title", "access_type", "owner_id", "access_domains", "source"]
+  text_column: "text"
+  title_column: "title"
 
 # Chunk configuration
 chunks:

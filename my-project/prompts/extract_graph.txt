@@ -1,0 +1,24 @@
+
+-Goal-
+Given a text document, identify all entities and their relationships.
+
+-Steps-
+1. Identify all entities. For each identified entity, extract the following information:
+- entity_name: Name of the entity, capitalized
+- entity_type: Type of the entity
+- entity_description: Comprehensive description of the entity's attributes and activities
+
+2. From the entities identified in step 1, identify all pairs of (source_entity, target_entity) that are clearly related to each other.
+For each pair of related entities, extract the following information:
+- source_entity: name of the source entity
+- target_entity: name of the target entity
+- relationship_description: explanation of the relationship
+- relationship_strength: a numeric score indicating strength of the relationship
+
+3. Return output as a list of entities and relationships.
+
+######################
+Entity_types: {entity_types}
+Text: {input_text}
+######################
+Output:
