@@ -237,6 +237,9 @@ async def query(request: QueryRequest):
             text_units=text_units,
             entities=entities,
             relationships=relationships,
+            covariates={},  # Empty dict - no covariates in this example
+            response_type="Multiple Paragraphs",  # Response format
+            description_embedding_store=None,  # No vector store for now
             user_id=user_data["id"],
             user_domains=user_data["domains"],
         )
