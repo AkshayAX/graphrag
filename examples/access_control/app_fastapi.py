@@ -23,6 +23,7 @@ from graphrag.query.indexer_adapters import (
     read_indexer_reports,
     read_indexer_text_units,
 )
+from graphrag.vector_stores import VectorStoreFactory, VectorStoreType
 
 app = FastAPI(title="GraphRAG Access Control Demo", version="1.0.0")
 
@@ -42,6 +43,7 @@ entities = None
 relationships = None
 reports = None
 project_root = None
+description_embedding_store = None
 
 # Mock user database
 USERS = {
@@ -83,7 +85,7 @@ class QueryResponse(BaseModel):
 
 def load_graphrag_data(root_path: str):
     """Load GraphRAG indexed data and configuration."""
-    global config, text_units, entities, relationships, reports, project_root
+    global config, text_units, entities, relationships, reports, project_root, description_embedding_store
 
     project_root = root_path
     print(f"Loading GraphRAG data from {root_path}...")
@@ -135,6 +137,24 @@ def load_graphrag_data(root_path: str):
     reports = read_indexer_reports(
         reports_df, communities_df, community_level=2, config=config
     )
+
+    # Load vector store for entity descriptions
+    try:
+        lancedb_dir = Path(root_path) / "output" / "lancedb"
+        if lancedb_dir.exists():
+            print(f"Loading vector store from: {lancedb_dir}")
+            description_embedding_store = VectorStoreFactory.get_vector_store(
+                vector_store_type=VectorStoreType.LanceDB,
+                kwargs={"db_uri": str(lancedb_dir)},
+            )
+            description_embedding_store.connect(db_uri=str(lancedb_dir))
+            print(f"✓ Loaded vector store")
+        else:
+            print(f"⚠ Vector store not found at {lancedb_dir}, will skip entity description search")
+            description_embedding_store = None
+    except Exception as e:
+        print(f"⚠ Failed to load vector store: {e}, will skip entity description search")
+        description_embedding_store = None
 
     print(f"✓ Loaded {len(text_units)} text units")
     print(f"✓ Loaded {len(entities)} entities")
@@ -239,7 +259,7 @@ async def query(request: QueryRequest):
             relationships=relationships,
             covariates={},  # Empty dict - no covariates in this example
             response_type="Multiple Paragraphs",  # Response format
-            description_embedding_store=None,  # No vector store for now
+            description_embedding_store=description_embedding_store,  # Use loaded vector store
             user_id=user_data["id"],
             user_domains=user_data["domains"],
         )
