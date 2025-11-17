@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphRAG Access Control Query Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .sidebar h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .user-select {
+            margin-bottom: 20px;
+        }
+
+        .user-select label {
+            display: block;
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .user-select select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .stats h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .query-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .query-input-group {
+            margin-bottom: 20px;
+        }
+
+        .query-input-group label {
+            display: block;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .query-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .query-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .response-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .response-section.show {
+            display: block;
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .response-header h3 {
+            color: #333;
+        }
+
+        .response-time {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .response-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .context-section {
+            margin-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .context-toggle {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: underline;
+            margin-bottom: 10px;
+        }
+
+        .context-content {
+            display: none;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .context-content.show {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 15px;
+            border-radius: 5px;
+            color: #c33;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-finance {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-engineering {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .badge-marketing {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-public {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .examples {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .examples h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .example-query {
+            display: block;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .example-query:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 GraphRAG Access Control Query Interface</h1>
+            <p>Query your knowledge graph with role-based access control</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>User Settings</h3>
+                <div class="user-select">
+                    <label for="userRole">Select User Role:</label>
+                    <select id="userRole" onchange="updateUser()">
+                        <option value="finance_key_123">Finance User</option>
+                        <option value="eng_key_456">Engineering User</option>
+                        <option value="marketing_key_789">Marketing User</option>
+                        <option value="public_key_000">Public User</option>
+                    </select>
+                </div>
+
+                <div id="userInfo" class="stats">
+                    <h4>Access Level</h4>
+                    <div id="userDomains"></div>
+                </div>
+
+                <div id="accessStats" class="stats" style="margin-top: 15px;">
+                    <h4>Available Data</h4>
+                    <div class="stat-item">
+                        <span>Text Units:</span>
+                        <span class="stat-value" id="statTextUnits">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Entities:</span>
+                        <span class="stat-value" id="statEntities">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Access %:</span>
+                        <span class="stat-value" id="statPercent">-</span>
+                    </div>
+                </div>
+
+                <div class="examples">
+                    <h4>Example Queries</h4>
+                    <a href="#" class="example-query" onclick="setQuery(event, 'What were the Q4 financial results?')">Financial Results</a>
+                    <a href="#" class="example-query" onclick="setQuery(event, 'What is our system architecture?')">System Architecture</a>
+                    <a href="#" class="example-query" onclick="setQuery(event, 'What is our company mission?')">Company Mission</a>
+                    <a href="#" class="example-query" onclick="setQuery(event, 'Tell me about our product roadmap')">Product Roadmap</a>
+                </div>
+            </div>
+
+            <div class="query-section">
+                <div class="query-input-group">
+                    <label for="queryInput">Enter Your Query:</label>
+                    <textarea
+                        id="queryInput"
+                        class="query-input"
+                        rows="3"
+                        placeholder="Ask anything about your data..."
+                    ></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="submitQuery()" id="submitBtn">
+                        🔍 Search
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearResults()">
+                        Clear
+                    </button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Searching with access control...</p>
+                </div>
+
+                <div class="error" id="error"></div>
+
+                <div class="response-section" id="responseSection">
+                    <div class="response-header">
+                        <h3>Response</h3>
+                        <span class="response-time" id="responseTime"></span>
+                    </div>
+                    <div class="response-content" id="responseContent"></div>
+
+                    <div class="context-section">
+                        <button class="context-toggle" onclick="toggleContext()">
+                            Show Context Data
+                        </button>
+                        <div class="context-content" id="contextContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentApiKey = 'finance_key_123';
+
+        const userConfigs = {
+            'finance_key_123': {
+                name: 'Finance User',
+                domains: ['finance', 'legal'],
+                badge: 'badge-finance'
+            },
+            'eng_key_456': {
+                name: 'Engineering User',
+                domains: ['engineering', 'product'],
+                badge: 'badge-engineering'
+            },
+            'marketing_key_789': {
+                name: 'Marketing User',
+                domains: ['marketing', 'sales'],
+                badge: 'badge-marketing'
+            },
+            'public_key_000': {
+                name: 'Public User',
+                domains: [],
+                badge: 'badge-public'
+            }
+        };
+
+        function updateUser() {
+            currentApiKey = document.getElementById('userRole').value;
+            const config = userConfigs[currentApiKey];
+
+            const domainsHtml = config.domains.length > 0
+                ? config.domains.map(d => `<span class="badge ${config.badge}">${d}</span>`).join(' ')
+                : '<span class="badge badge-public">Public Access</span>';
+
+            document.getElementById('userDomains').innerHTML = domainsHtml;
+
+            // Fetch stats
+            fetchStats();
+        }
+
+        async function fetchStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/stats?api_key=${currentApiKey}`);
+                const data = await response.json();
+
+                if (data.accessible) {
+                    document.getElementById('statTextUnits').textContent =
+                        `${data.accessible.text_units}/${data.total.text_units}`;
+                    document.getElementById('statEntities').textContent =
+                        `${data.accessible.entities}/${data.total.entities}`;
+                    document.getElementById('statPercent').textContent =
+                        `${data.access_percentage.text_units}%`;
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
+        async function submitQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+
+            if (!query) {
+                showError('Please enter a query');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('responseSection').classList.remove('show');
+            document.getElementById('error').classList.remove('show');
+            document.getElementById('submitBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        api_key: currentApiKey,
+                        response_type: 'multiple paragraphs'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Query failed');
+                }
+
+                // Show response
+                document.getElementById('responseContent').textContent = data.response;
+                document.getElementById('responseTime').textContent =
+                    `Completed in ${data.stats.completion_time.toFixed(2)}s`;
+
+                // Set context
+                document.getElementById('contextContent').textContent = data.context_text;
+
+                document.getElementById('responseSection').classList.add('show');
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        function clearResults() {
+            document.getElementById('queryInput').value = '';
+            document.getElementById('responseSection').classList.remove('show');
+            document.getElementById('error').classList.remove('show');
+            document.getElementById('contextContent').classList.remove('show');
+        }
+
+        function toggleContext() {
+            document.getElementById('contextContent').classList.toggle('show');
+        }
+
+        function setQuery(event, query) {
+            event.preventDefault();
+            document.getElementById('queryInput').value = query;
+        }
+
+        // Enable Enter to submit (Shift+Enter for new line)
+        document.getElementById('queryInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitQuery();
+            }
+        });
+
+        // Initialize
+        updateUser();
+    </script>
+</body>
+</html>
