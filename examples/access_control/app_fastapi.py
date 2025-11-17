@@ -329,7 +329,7 @@ def main():
     parser.add_argument(
         "--port",
         type=int,
-        default=8000,
+        default=8045,
         help="Port to bind to",
     )
 
