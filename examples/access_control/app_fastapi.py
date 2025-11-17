@@ -246,8 +246,8 @@ async def query(request: QueryRequest):
 
         print(f"Executing query: {request.query}")
 
-        # Execute search
-        result = await search_engine.asearch(request.query)
+        # Execute search (synchronous, not async)
+        result = search_engine.search(request.query)
 
         print(f"Query completed successfully")
 
@@ -273,7 +273,7 @@ async def query(request: QueryRequest):
         import traceback
         error_trace = traceback.format_exc()
         print(f"ERROR in query endpoint:\n{error_trace}")
-        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}\n\nTraceback:\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
 
 
 @app.get("/api/docs")
@@ -316,7 +316,17 @@ def _can_access(attributes: Optional[dict], user_data: dict) -> bool:
         doc_domains = attributes.get("access_domains", [])
         if isinstance(doc_domains, str):
             doc_domains = [d.strip() for d in doc_domains.split(",")]
-        return bool(set(doc_domains) & set(user_data["domains"]))
+
+        # Convert to set, handling numpy arrays
+        try:
+            if doc_domains is not None and len(doc_domains) > 0:
+                doc_domains_set = set(doc_domains)
+            else:
+                doc_domains_set = set()
+        except (TypeError, ValueError):
+            doc_domains_set = set()
+
+        return bool(set(user_data["domains"]) & doc_domains_set)
 
     return False
 
