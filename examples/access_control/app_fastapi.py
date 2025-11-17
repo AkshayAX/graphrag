@@ -246,8 +246,8 @@ async def query(request: QueryRequest):
 
         print(f"Executing query: {request.query}")
 
-        # Execute search (synchronous, not async)
-        result = search_engine.search(request.query)
+        # Execute search - the search() method returns a coroutine
+        result = await search_engine.search(request.query)
 
         print(f"Query completed successfully")
 
