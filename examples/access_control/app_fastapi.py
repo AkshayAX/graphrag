@@ -23,7 +23,7 @@ from graphrag.query.indexer_adapters import (
     read_indexer_reports,
     read_indexer_text_units,
 )
-from graphrag.vector_stores import VectorStoreFactory, VectorStoreType
+from graphrag.vector_stores.lancedb import LanceDBVectorStore
 
 app = FastAPI(title="GraphRAG Access Control Demo", version="1.0.0")
 
@@ -143,10 +143,7 @@ def load_graphrag_data(root_path: str):
         lancedb_dir = Path(root_path) / "output" / "lancedb"
         if lancedb_dir.exists():
             print(f"Loading vector store from: {lancedb_dir}")
-            description_embedding_store = VectorStoreFactory.get_vector_store(
-                vector_store_type=VectorStoreType.LanceDB,
-                kwargs={"db_uri": str(lancedb_dir)},
-            )
+            description_embedding_store = LanceDBVectorStore(db_uri=str(lancedb_dir))
             description_embedding_store.connect(db_uri=str(lancedb_dir))
             print(f"✓ Loaded vector store")
         else:
