@@ -266,7 +266,7 @@ async def get_stats(user_role: str = Query(default="guest")):
     }
 
 
-@app.post("/api/query", response_model=QueryResponse)
+@app.post("/api/query")
 async def query(request: QueryRequest):
     """Execute a GraphRAG query with access control."""
     if request.user_role not in USERS:
@@ -304,20 +304,31 @@ async def query(request: QueryRequest):
         # Get filtered counts
         stats = await get_stats(request.user_role)
 
-        return QueryResponse(
-            answer=result.response,
-            context_data={
-                "text_units": len(result.context_data.get("sources", [])),
-                "entities": len(result.context_data.get("entities", [])),
-                "relationships": len(result.context_data.get("relationships", [])),
+        # Build response with all available fields
+        response_data = {
+            "answer": result.response,
+            "context_data": {
+                "text_units": len(result.context_data.get("sources", [])) if result.context_data else 0,
+                "entities": len(result.context_data.get("entities", [])) if result.context_data else 0,
+                "relationships": len(result.context_data.get("relationships", [])) if result.context_data else 0,
             },
-            user_info={
+            "user_info": {
                 "role": request.user_role,
                 "name": user_data["name"],
                 "domains": user_data["domains"],
             },
-            access_stats=stats["accessible"],
-        )
+            "access_stats": stats["accessible"],
+        }
+
+        # Add optional fields if they exist
+        if hasattr(result, "completion_time"):
+            response_data["completion_time"] = result.completion_time
+        if hasattr(result, "llm_calls"):
+            response_data["llm_calls"] = result.llm_calls
+        if hasattr(result, "prompt_tokens"):
+            response_data["prompt_tokens"] = result.prompt_tokens
+
+        return response_data
 
     except Exception as e:
         import traceback
