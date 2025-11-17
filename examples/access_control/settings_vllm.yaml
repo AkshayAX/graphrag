@@ -1,0 +1,84 @@
+# GraphRAG Configuration for vLLM Local Models
+# Copy this to your project as settings.yaml
+
+# Prerequisites:
+# 1. Start vLLM for LLM: python -m vllm.entrypoints.openai.api_server --model mistralai/Mistral-7B-Instruct-v0.2 --port 8000
+# 2. Start vLLM for embeddings: python -m vllm.entrypoints.openai.api_server --model BAAI/bge-large-en-v1.5 --port 8001
+
+llm:
+  api_key: "vllm"  # Required but can be any string
+  type: "openai_chat"
+  model: "mistralai/Mistral-7B-Instruct-v0.2"
+  api_base: "http://localhost:8000/v1"
+  max_tokens: 4000
+  temperature: 0.7
+  request_timeout: 180.0
+
+  # Rate limiting (adjust based on your GPU)
+  concurrent_requests: 8  # vLLM handles batching well
+  rpm: 120
+
+embeddings:
+  api_key: "vllm"
+  type: "openai_embedding"
+  model: "BAAI/bge-large-en-v1.5"
+  api_base: "http://localhost:8001/v1"
+
+  # Embedding settings
+  concurrent_requests: 8
+  rpm: 120
+
+chunks:
+  size: 1200
+  overlap: 100
+  group_by_columns: [id]
+
+input:
+  type: "file"
+  file_type: "json"
+  base_dir: "input"
+  encoding: "utf-8"
+
+cache:
+  type: "file"
+  base_dir: "cache"
+
+storage:
+  type: "file"
+  base_dir: "output"
+
+reporting:
+  type: "file"
+  base_dir: "output/reports"
+
+entity_extraction:
+  prompt: "prompts/entity_extraction.txt"
+  entity_types: [organization, person, geo, event]
+  max_gleanings: 1
+
+summarize_descriptions:
+  prompt: "prompts/summarize_descriptions.txt"
+  max_length: 500
+
+claim_extraction:
+  enabled: false
+
+community_reports:
+  prompt: "prompts/community_report.txt"
+  max_length: 1500
+  max_input_length: 8000
+
+local_search:
+  text_unit_prop: 0.5
+  community_prop: 0.1
+  conversation_history_max_turns: 5
+  top_k_entities: 10
+  top_k_relationships: 10
+  max_tokens: 8000
+
+global_search:
+  max_tokens: 8000
+  data_max_tokens: 8000
+  map_max_tokens: 4000
+  reduce_max_tokens: 4000
+  concurrency: 8
