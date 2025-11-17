@@ -66,31 +66,41 @@ def load_graphrag_data(project_root: str):
     # Find the latest artifacts directory (GraphRAG creates timestamped subdirs)
     artifacts_dirs = sorted(output_dir.glob("*/artifacts"))
     if not artifacts_dirs:
-        # Fallback: try direct output dir (older GraphRAG versions)
+        # Fallback: try direct output dir (newer GraphRAG versions)
         artifacts_dir = output_dir
     else:
         artifacts_dir = artifacts_dirs[-1]  # Get the latest
 
     print(f"Loading artifacts from: {artifacts_dir}")
 
+    # Helper function to find parquet files with different naming conventions
+    def find_parquet(name_options):
+        for name in name_options:
+            path = artifacts_dir / name
+            if path.exists():
+                return path
+        raise FileNotFoundError(f"Could not find any of {name_options} in {artifacts_dir}")
+
     text_units_df = pd.read_parquet(
-        artifacts_dir / "create_final_text_units.parquet"
+        find_parquet(["text_units.parquet", "create_final_text_units.parquet"])
     )
     text_units = read_indexer_text_units(text_units_df)
 
-    entities_df = pd.read_parquet(artifacts_dir / "create_final_entities.parquet")
+    entities_df = pd.read_parquet(
+        find_parquet(["entities.parquet", "create_final_entities.parquet"])
+    )
     communities_df = pd.read_parquet(
-        artifacts_dir / "create_final_communities.parquet"
+        find_parquet(["communities.parquet", "create_final_communities.parquet"])
     )
     entities = read_indexer_entities(entities_df, communities_df, community_level=2)
 
     relationships_df = pd.read_parquet(
-        artifacts_dir / "create_final_relationships.parquet"
+        find_parquet(["relationships.parquet", "create_final_relationships.parquet"])
     )
     relationships = read_indexer_relationships(relationships_df)
 
     reports_df = pd.read_parquet(
-        artifacts_dir / "create_final_community_reports.parquet"
+        find_parquet(["community_reports.parquet", "create_final_community_reports.parquet"])
     )
     reports = read_indexer_reports(
         reports_df, communities_df, community_level=2, config=config
