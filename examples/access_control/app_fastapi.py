@@ -228,6 +228,8 @@ async def query(request: QueryRequest):
     user_data = USERS[request.user_role]
 
     try:
+        print(f"Creating search engine for user: {request.user_role}")
+
         # Create search engine with access control
         search_engine = get_local_search_engine_with_access_control(
             config=config,
@@ -239,8 +241,12 @@ async def query(request: QueryRequest):
             user_domains=user_data["domains"],
         )
 
+        print(f"Executing query: {request.query}")
+
         # Execute search
         result = await search_engine.asearch(request.query)
+
+        print(f"Query completed successfully")
 
         # Get filtered counts
         stats = await get_stats(request.user_role)
@@ -261,7 +267,10 @@ async def query(request: QueryRequest):
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"ERROR in query endpoint:\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}\n\nTraceback:\n{error_trace}")
 
 
 @app.get("/api/docs")
