@@ -6,7 +6,9 @@
 from typing import Any
 from uuid import UUID
 
-from graphrag.data_model import Entity, Relationship, TextUnit
+from graphrag.data_model.entity import Entity
+from graphrag.data_model.relationship import Relationship
+from graphrag.data_model.text_unit import TextUnit
 
 
 class AccessControlFilter:
