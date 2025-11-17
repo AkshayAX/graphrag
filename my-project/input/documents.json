@@ -1,0 +1,92 @@
+[
+  {
+    "id": "doc001",
+    "title": "Public Company Overview",
+    "text": "Acme Corporation is a publicly traded technology company founded in 2010. The company specializes in cloud computing services and enterprise software solutions. Acme has offices in San Francisco, New York, and London with over 5,000 employees worldwide. The company's flagship product is AcmeCloud, a comprehensive cloud platform used by Fortune 500 companies.",
+    "access_type": "public",
+    "owner_id": null,
+    "access_domains": [],
+    "source": "public_filings"
+  },
+  {
+    "id": "doc002",
+    "title": "Q4 2024 Financial Results - Technology Division",
+    "text": "Acme Corporation's technology division reported Q4 2024 revenue of $125 million, representing a 15% increase year-over-year. The AcmeCloud platform added 450 new enterprise customers in Q4. Operating expenses for the technology division were $85 million, resulting in an operating margin of 32%. The division's R&D spending increased to $30 million as the company invests in AI capabilities.",
+    "access_type": "domain",
+    "owner_id": null,
+    "access_domains": ["technology", "research"],
+    "source": "internal_reports"
+  },
+  {
+    "id": "doc003",
+    "title": "Q4 2024 Financial Results - Finance Summary",
+    "text": "Acme Corporation's total Q4 2024 revenue reached $200 million across all divisions. Total operating expenses were $140 million. The company generated $60 million in operating income with a net profit margin of 28%. Cash reserves stand at $500 million. The board approved a $50 million stock buyback program. Acme's debt-to-equity ratio improved to 0.3, the lowest in company history.",
+    "access_type": "domain",
+    "owner_id": null,
+    "access_domains": ["finance"],
+    "source": "financial_reports"
+  },
+  {
+    "id": "doc004",
+    "title": "Engineering Roadmap 2025",
+    "text": "The engineering team is planning major infrastructure upgrades for 2025. Key initiatives include migrating to Kubernetes for container orchestration, implementing a new CI/CD pipeline using GitHub Actions, and upgrading the database infrastructure to support 10x current load. The team will grow from 200 to 300 engineers. New engineering offices will open in Austin and Seattle.",
+    "access_type": "domain",
+    "owner_id": null,
+    "access_domains": ["technology", "engineering"],
+    "source": "engineering_docs"
+  },
+  {
+    "id": "doc005",
+    "title": "Private Executive Compensation Plan",
+    "text": "CEO Jane Smith's total compensation package for 2024 includes base salary of $500,000, performance bonus of $1.2 million, and stock options worth $3 million. CFO John Doe received $400,000 base salary with $800,000 bonus. The compensation committee approved retention bonuses for the executive team totaling $5 million over three years.",
+    "access_type": "private",
+    "owner_id": "admin_123",
+    "access_domains": [],
+    "source": "executive_docs"
+  },
+  {
+    "id": "doc006",
+    "title": "Research and Development Investments",
+    "text": "Acme's research division is investing heavily in artificial intelligence and machine learning. The AI research team has developed a new natural language processing model that outperforms GPT-3 on specific enterprise tasks. Research spending for 2024 totaled $120 million. The company filed 15 new patents related to distributed computing and AI technologies. Research partnerships established with MIT and Stanford University.",
+    "access_type": "domain",
+    "owner_id": null,
+    "access_domains": ["research", "technology"],
+    "source": "research_reports"
+  },
+  {
+    "id": "doc007",
+    "title": "Public Market Performance",
+    "text": "Acme Corporation's stock (NASDAQ: ACME) closed Q4 2024 at $85 per share, up from $72 at the start of the quarter. Market capitalization reached $8.5 billion. Institutional ownership increased to 65%. The stock has delivered 45% returns over the past year, outperforming the NASDAQ composite index. Analyst consensus rating is 'Strong Buy' with a target price of $100.",
+    "access_type": "public",
+    "owner_id": null,
+    "access_domains": [],
+    "source": "market_data"
+  },
+  {
+    "id": "doc008",
+    "title": "Finance Department Budget 2025",
+    "text": "The finance department budget for 2025 is $15 million, covering 50 finance professionals. Major initiatives include implementing new financial reporting systems, upgrading ERP infrastructure, and expanding the financial planning and analysis team. The department will focus on improving forecasting accuracy and reducing monthly close time from 10 days to 5 days.",
+    "access_type": "domain",
+    "owner_id": null,
+    "access_domains": ["finance"],
+    "source": "budget_docs"
+  },
+  {
+    "id": "doc009",
+    "title": "Technology Infrastructure Costs",
+    "text": "Acme's cloud infrastructure costs for 2024 totaled $45 million, with AWS accounting for 60% and Azure 40%. Data center operations cost an additional $20 million. The company plans to reduce infrastructure costs by 20% through optimization and better resource management. Network bandwidth costs were $5 million. Security infrastructure and tools cost $10 million annually.",
+    "access_type": "domain",
+    "owner_id": null,
+    "access_domains": ["technology", "finance"],
+    "source": "cost_reports"
+  },
+  {
+    "id": "doc010",
+    "title": "Public Product Announcements",
+    "text": "Acme announced three new product features in Q4 2024: AcmeCloud AI Assistant, Advanced Security Monitoring, and Multi-Cloud Integration. The AI Assistant uses proprietary language models to help developers write code faster. Security Monitoring provides real-time threat detection. Multi-Cloud Integration allows customers to manage AWS, Azure, and Google Cloud from a single interface. Beta testing begins in Q1 2025.",
+    "access_type": "public",
+    "owner_id": null,
+    "access_domains": [],
+    "source": "press_releases"
+  }
+]
