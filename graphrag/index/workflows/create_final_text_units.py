@@ -59,7 +59,17 @@ def create_final_text_units(
     final_covariates: pd.DataFrame | None,
 ) -> pd.DataFrame:
     """All the steps to transform the text units."""
-    selected = text_units.loc[:, ["id", "text", "document_ids", "n_tokens"]]
+    # Start with base columns
+    base_columns = ["id", "text", "document_ids", "n_tokens"]
+
+    # Add access control columns if they exist
+    access_control_columns = ["access_type", "owner_id", "access_domains", "source"]
+    available_columns = base_columns.copy()
+    for col in access_control_columns:
+        if col in text_units.columns:
+            available_columns.append(col)
+
+    selected = text_units.loc[:, available_columns]
     selected["human_readable_id"] = selected.index
 
     entity_join = _entities(final_entities)
@@ -77,9 +87,14 @@ def create_final_text_units(
 
     aggregated = final_joined.groupby("id", sort=False).agg("first").reset_index()
 
+    # Only select columns that actually exist in the aggregated dataframe
+    available_final_columns = [
+        col for col in TEXT_UNITS_FINAL_COLUMNS if col in aggregated.columns
+    ]
+
     return aggregated.loc[
         :,
-        TEXT_UNITS_FINAL_COLUMNS,
+        available_final_columns,
     ]
 
 
