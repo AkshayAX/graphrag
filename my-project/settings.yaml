@@ -46,6 +46,7 @@ entity_extraction:
   prompt: "prompts/entity_extraction.txt"
   # Comprehensive entity types for Wikipedia-like knowledge base covering all sectors
   entity_types: [
+    # Core universal types
     organization,      # Companies, institutions, agencies, NGOs, government bodies
     person,           # People, executives, researchers, authors, leaders
     geo,              # Geographic locations, cities, countries, regions, facilities
@@ -60,7 +61,36 @@ entity_extraction:
     patent,           # Intellectual property, inventions, trademarks
     skill,            # Competencies, capabilities, expertise areas, qualifications
     document,         # Reports, papers, publications, studies, specifications
-    currency          # Financial instruments, money, investments, stocks
+    currency,         # Financial instruments, money, investments, stocks
+
+    # Healthcare sector
+    medical_condition,  # Diseases, disorders, syndromes, health conditions
+    treatment,          # Therapies, procedures, medical interventions, cures
+    drug,              # Medications, pharmaceuticals, vaccines, biologics
+    medical_device,    # Medical equipment, implants, diagnostic tools, prosthetics
+
+    # Education sector
+    educational_institution,  # Schools, universities, colleges, academies
+    degree,                  # Academic qualifications, certifications, diplomas
+    course,                  # Classes, training programs, curricula
+
+    # Sports sector
+    sport,            # Types of sports, athletic activities, games
+    team,             # Sports teams, clubs, national teams, squads
+    athlete,          # Players, competitors, sports professionals
+    competition,      # Tournaments, leagues, championships, matches
+    venue,            # Stadiums, arenas, sports facilities
+
+    # Tourism & hospitality
+    destination,      # Tourist destinations, attractions, landmarks, sites
+    accommodation,    # Hotels, resorts, lodges, vacation rentals
+
+    # Defense & military
+    military_unit,    # Regiments, divisions, forces, battalions
+    weapon_system,    # Weapons, defense systems, military equipment
+
+    # Trade & commerce
+    commodity         # Traded goods, raw materials, products, resources
   ]
   max_gleanings: 2  # Two extraction passes for better quality
 
@@ -111,11 +141,24 @@ embed_text:
 extract_graph:
   model_id: default_chat_model
   prompt: "prompts/extract_graph.txt"
-  # Same comprehensive entity types as entity_extraction
+  # Same comprehensive entity types as entity_extraction (30 total)
   entity_types: [
+    # Core universal types (15)
     organization, person, geo, event, technology,
     product, concept, industry, metric, regulation,
-    project, patent, skill, document, currency
+    project, patent, skill, document, currency,
+    # Healthcare sector (4)
+    medical_condition, treatment, drug, medical_device,
+    # Education sector (3)
+    educational_institution, degree, course,
+    # Sports sector (5)
+    sport, team, athlete, competition, venue,
+    # Tourism sector (2)
+    destination, accommodation,
+    # Defense sector (2)
+    military_unit, weapon_system,
+    # Trade sector (1)
+    commodity
   ]
   max_gleanings: 2  # Two extraction passes for better quality
 
