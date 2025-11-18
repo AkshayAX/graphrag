@@ -596,6 +596,19 @@ async def query(request: QueryRequest):
 
         if hasattr(result, 'context_text'):
             print(f"  - context_text length: {len(result.context_text) if result.context_text else 0} chars")
+            # DEBUG: Print first 500 chars of context to see what the LLM actually received
+            if result.context_text:
+                print(f"\n📝 CONTEXT TEXT PREVIEW (first 1000 chars):")
+                print(f"{'='*80}")
+                print(result.context_text[:1000])
+                print(f"{'='*80}")
+                # Check if 'research' or 'AI' appears in context
+                if 'research' in result.context_text.lower() or 'ai' in result.context_text.lower():
+                    print(f"\n✅ Context DOES contain research/AI keywords!")
+                    print(f"   This suggests LLM is not extracting the right information")
+                else:
+                    print(f"\n❌ Context does NOT contain research/AI keywords")
+                    print(f"   This confirms entity selection didn't find the right text units")
 
         if hasattr(result, 'context_records') and result.context_records:
             print(f"  - context_records: {len(result.context_records)} items")
