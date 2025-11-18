@@ -145,7 +145,10 @@ class LocalSearchMixedContext(LocalContextBuilder):
             include_entity_names=include_entity_names,
             exclude_entity_names=exclude_entity_names,
             k=top_k_mapped_entities,
-            oversample_scaler=2,
+            # IMPORTANT: Increased from 2 to 4 for access control scenarios
+            # Access control can filter out 60%+ of results, so we need more samples
+            # to ensure we get enough accessible entities
+            oversample_scaler=4,
         )
 
         # build context

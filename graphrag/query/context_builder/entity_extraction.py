@@ -46,21 +46,44 @@ def map_query_to_entities(
     oversample_scaler: int = 2,
 ) -> list[Entity]:
     """Extract entities that match a given query using semantic similarity of text embeddings of query and entity descriptions."""
+    import logging
+    logger = logging.getLogger(__name__)
+
     if include_entity_names is None:
         include_entity_names = []
     if exclude_entity_names is None:
         exclude_entity_names = []
     all_entities = list(all_entities_dict.values())
     matched_entities = []
+
+    logger.info(f"🔍 map_query_to_entities - Query: '{query}'")
+    logger.info(f"   Total entities available: {len(all_entities)}")
+    logger.info(f"   Vector store type: {type(text_embedding_vectorstore).__name__}")
+
     if query != "":
         # get entities with highest semantic similarity to query
         # oversample to account for excluded entities
+        logger.info(f"   Searching for top {k * oversample_scaler} entities via vector similarity...")
+
         search_results = text_embedding_vectorstore.similarity_search_by_text(
             text=query,
             text_embedder=lambda t: text_embedder.embed(t),
             k=k * oversample_scaler,
         )
-        for result in search_results:
+
+        logger.info(f"   Vector search returned {len(search_results)} results")
+
+        # IMPORTANT: Pre-filter to only include accessible entity IDs
+        # The vector store may contain embeddings for entities that have been filtered out by access control
+        accessible_entity_ids = set(all_entities_dict.keys())
+        accessible_results = [r for r in search_results if r.document.id in accessible_entity_ids]
+
+        if len(accessible_results) < len(search_results):
+            filtered_count = len(search_results) - len(accessible_results)
+            logger.info(f"   Filtered out {filtered_count} inaccessible entities from vector results")
+            logger.info(f"   Accessible results: {len(accessible_results)}")
+
+        for idx, result in enumerate(accessible_results):
             if embedding_vectorstore_key == EntityVectorStoreKey.ID and isinstance(
                 result.document.id, str
             ):
@@ -73,7 +96,15 @@ def map_query_to_entities(
                 )
             if matched:
                 matched_entities.append(matched)
+                if idx < 10:  # Log first 10 matches (increased from 3)
+                    score_str = f"{result.score:.4f}" if hasattr(result, 'score') else 'N/A'
+                    desc_preview = (matched.description[:60] + "...") if matched.description else "NO DESCRIPTION"
+                    logger.info(f"      Match {idx+1}: {matched.title} (score: {score_str})")
+                    logger.info(f"         Description: {desc_preview}")
+            else:
+                logger.warning(f"      Result {idx+1}: Entity ID {result.document.id} not found in entity dict")
     else:
+        logger.info(f"   Empty query - using top {k} entities by rank")
         all_entities.sort(key=lambda x: x.rank if x.rank else 0, reverse=True)
         matched_entities = all_entities[:k]
 
@@ -89,7 +120,11 @@ def map_query_to_entities(
     included_entities = []
     for entity_name in include_entity_names:
         included_entities.extend(get_entity_by_name(all_entities, entity_name))
-    return included_entities + matched_entities
+
+    final_entities = included_entities + matched_entities
+    logger.info(f"   ✅ Selected {len(final_entities)} entities total ({len(included_entities)} included + {len(matched_entities)} matched)")
+
+    return final_entities
 
 
 def find_nearest_neighbors_by_entity_rank(

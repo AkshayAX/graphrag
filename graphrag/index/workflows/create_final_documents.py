@@ -74,4 +74,10 @@ def create_final_documents(
     if "metadata" not in rejoined.columns:
         rejoined["metadata"] = pd.Series(dtype="object")
 
+    # Ensure access control columns exist
+    access_control_fields = ["access_type", "owner_id", "access_domains", "source"]
+    for field in access_control_fields:
+        if field not in rejoined.columns:
+            rejoined[field] = pd.Series(dtype="object")
+
     return rejoined.loc[:, DOCUMENTS_FINAL_COLUMNS]

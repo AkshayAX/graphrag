@@ -1,0 +1,80 @@
+# GraphRAG Configuration for Ollama Local Models
+# Copy this to your project as settings.yaml
+
+llm:
+  api_key: "ollama"  # Required but can be any string for Ollama
+  type: "openai_chat"
+  model: "ollama/mistral"  # or ollama/llama3.1, ollama/qwen2.5:14b
+  api_base: "http://localhost:11434/v1"
+  max_tokens: 4000
+  temperature: 0.7
+  request_timeout: 180.0
+
+  # Rate limiting (adjust based on your hardware)
+  concurrent_requests: 4  # Lower if you have limited RAM/GPU
+  rpm: 60  # Requests per minute
+
+embeddings:
+  api_key: "ollama"
+  type: "openai_embedding"
+  model: "ollama/nomic-embed-text"  # or ollama/mxbai-embed-large
+  api_base: "http://localhost:11434/v1"
+
+  # Embedding settings
+  concurrent_requests: 4
+  rpm: 60
+
+chunks:
+  size: 1200
+  overlap: 100
+  group_by_columns: [id]  # Required for access control
+
+input:
+  type: "file"
+  file_type: "json"  # For MongoDB exported data
+  base_dir: "input"
+  encoding: "utf-8"
+
+cache:
+  type: "file"
+  base_dir: "cache"
+
+storage:
+  type: "file"
+  base_dir: "output"
+
+reporting:
+  type: "file"
+  base_dir: "output/reports"
+
+entity_extraction:
+  prompt: "prompts/entity_extraction.txt"
+  entity_types: [organization, person, geo, event]
+  max_gleanings: 1  # Reduce for faster processing with local models
+
+summarize_descriptions:
+  prompt: "prompts/summarize_descriptions.txt"
+  max_length: 500
+
+claim_extraction:
+  enabled: false  # Disable for faster processing
+
+community_reports:
+  prompt: "prompts/community_report.txt"
+  max_length: 1500
+  max_input_length: 8000
+
+local_search:
+  text_unit_prop: 0.5
+  community_prop: 0.1
+  conversation_history_max_turns: 5
+  top_k_entities: 10
+  top_k_relationships: 10
+  max_tokens: 8000
+
+global_search:
+  max_tokens: 8000
+  data_max_tokens: 8000
+  map_max_tokens: 4000
+  reduce_max_tokens: 4000
+  concurrency: 4

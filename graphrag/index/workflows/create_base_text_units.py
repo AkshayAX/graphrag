@@ -72,6 +72,12 @@ def create_base_text_units(
     if "metadata" in documents:
         agg_dict["metadata"] = "first"  # type: ignore
 
+    # Preserve access control fields
+    access_control_fields = ["access_type", "owner_id", "access_domains", "source"]
+    for field in access_control_fields:
+        if field in documents.columns:
+            agg_dict[field] = "first"  # type: ignore
+
     aggregated = (
         (
             sort.groupby(group_by_columns, sort=False)
@@ -87,6 +93,12 @@ def create_base_text_units(
         line_delimiter = ".\n"
         metadata_str = ""
         metadata_tokens = 0
+
+        # Extract access control metadata for propagation
+        access_type = row.get("access_type", None)
+        owner_id = row.get("owner_id", None)
+        access_domains = row.get("access_domains", None)
+        source = row.get("source", None)
 
         if prepend_metadata and "metadata" in row:
             metadata = row["metadata"]
@@ -124,7 +136,18 @@ def create_base_text_units(
                         (chunk[0], metadata_str + chunk[1], chunk[2]) if chunk else None
                     )
 
-        row["chunks"] = chunked
+        # Attach access control metadata to each chunk
+        chunked_with_access = []
+        for chunk in chunked:
+            chunked_with_access.append({
+                "chunk": chunk,
+                "access_type": access_type,
+                "owner_id": owner_id,
+                "access_domains": access_domains,
+                "source": source,
+            })
+
+        row["chunks"] = chunked_with_access
         return row
 
     # Track progress of row-wise apply operation
@@ -145,10 +168,18 @@ def create_base_text_units(
     aggregated = aggregated.explode("chunks")
     aggregated.rename(
         columns={
-            "chunks": "chunk",
+            "chunks": "chunk_data",
         },
         inplace=True,
     )
+
+    # Extract chunk and access control metadata
+    aggregated["chunk"] = aggregated["chunk_data"].apply(lambda x: x["chunk"] if isinstance(x, dict) else x)
+    aggregated["access_type"] = aggregated["chunk_data"].apply(lambda x: x.get("access_type") if isinstance(x, dict) else None)
+    aggregated["owner_id"] = aggregated["chunk_data"].apply(lambda x: x.get("owner_id") if isinstance(x, dict) else None)
+    aggregated["access_domains"] = aggregated["chunk_data"].apply(lambda x: x.get("access_domains") if isinstance(x, dict) else None)
+    aggregated["source"] = aggregated["chunk_data"].apply(lambda x: x.get("source") if isinstance(x, dict) else None)
+
     aggregated["id"] = aggregated.apply(
         lambda row: gen_sha512_hash(row, ["chunk"]), axis=1
     )
@@ -157,6 +188,9 @@ def create_base_text_units(
     )
     # rename for downstream consumption
     aggregated.rename(columns={"chunk": "text"}, inplace=True)
+
+    # Drop temporary chunk_data column
+    aggregated = aggregated.drop(columns=["chunk_data"])
 
     return cast(
         "pd.DataFrame", aggregated[aggregated["text"].notna()].reset_index(drop=True)
