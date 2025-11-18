@@ -191,6 +191,36 @@ def load_graphrag_data(root_path: str):
     print(f"✓ Loaded {len(relationships)} relationships")
     print(f"✓ Loaded {len(reports)} community reports")
 
+    # Debug: Show access control metadata in loaded data
+    print(f"\n{'='*60}")
+    print(f"🔍 ACCESS CONTROL METADATA CHECK")
+    print(f"{'='*60}")
+
+    if text_units:
+        print(f"\n📄 Sample Text Units (first 3):")
+        for i, tu in enumerate(text_units[:3]):
+            attrs = tu.attributes if hasattr(tu, 'attributes') else {}
+            print(f"\n  [{i+1}] ID: {tu.id}")
+            print(f"      Has attributes: {bool(attrs)}")
+            if attrs:
+                print(f"      Access type: {attrs.get('access_type', 'MISSING')}")
+                print(f"      Owner ID: {attrs.get('owner_id', 'MISSING')}")
+                print(f"      Access domains: {attrs.get('access_domains', 'MISSING')}")
+                print(f"      Source: {attrs.get('source', 'MISSING')}")
+            print(f"      Text preview: {tu.text[:80]}...")
+
+    if entities:
+        print(f"\n🏷️  Sample Entities (first 3):")
+        for i, entity in enumerate(entities[:3]):
+            attrs = entity.attributes if hasattr(entity, 'attributes') else {}
+            print(f"\n  [{i+1}] {entity.title} ({entity.type})")
+            print(f"      Has attributes: {bool(attrs)}")
+            print(f"      Has text_unit_ids: {hasattr(entity, 'text_unit_ids')}")
+            if hasattr(entity, 'text_unit_ids'):
+                print(f"      Source text units: {entity.text_unit_ids}")
+
+    print(f"\n{'='*60}\n")
+
 
 @app.get("/")
 async def home():
@@ -278,7 +308,61 @@ async def query(request: QueryRequest):
     user_data = USERS[request.user_role]
 
     try:
-        print(f"Creating search engine for user: {request.user_role}")
+        print(f"\n{'='*80}")
+        print(f"🔍 QUERY DEBUG - User: {request.user_role} | Query: {request.query}")
+        print(f"{'='*80}")
+
+        # Debug: Show total data before filtering
+        print(f"\n📊 TOTAL DATA (before filtering):")
+        print(f"  - Text units: {len(text_units)}")
+        print(f"  - Entities: {len(entities)}")
+        print(f"  - Relationships: {len(relationships)}")
+
+        # Debug: Manually filter to see what access control does
+        from graphrag.query.filters.access_control import AccessControlFilter
+
+        access_filter = AccessControlFilter(
+            user_id=user_data["id"],
+            user_domains=user_data["domains"]
+        )
+
+        print(f"\n🔐 ACCESS CONTROL:")
+        print(f"  - User ID: {user_data['id']}")
+        print(f"  - User domains: {user_data['domains']}")
+
+        # Filter data manually to see results
+        filtered_text_units, filtered_entities, filtered_relationships = (
+            access_filter.filter_context_data(
+                text_units=text_units,
+                entities=entities,
+                relationships=relationships,
+            )
+        )
+
+        print(f"\n✅ FILTERED DATA:")
+        print(f"  - Text units: {len(filtered_text_units)}")
+        print(f"  - Entities: {len(filtered_entities)}")
+        print(f"  - Relationships: {len(filtered_relationships)}")
+
+        # Show sample of filtered text units
+        if filtered_text_units:
+            print(f"\n📄 SAMPLE TEXT UNITS (first 2):")
+            for i, tu in enumerate(filtered_text_units[:2]):
+                print(f"  [{i+1}] ID: {tu.id}")
+                print(f"      Access: {tu.attributes.get('access_type', 'unknown')}")
+                print(f"      Domains: {tu.attributes.get('access_domains', [])}")
+                print(f"      Text: {tu.text[:100]}...")
+        else:
+            print(f"\n⚠️  NO TEXT UNITS ACCESSIBLE TO THIS USER!")
+
+        # Show sample of filtered entities
+        if filtered_entities:
+            print(f"\n🏷️  SAMPLE ENTITIES (first 3):")
+            for i, entity in enumerate(filtered_entities[:3]):
+                print(f"  [{i+1}] {entity.title} (type: {entity.type})")
+                print(f"      Description: {entity.description[:80] if entity.description else 'N/A'}...")
+
+        print(f"\n🔧 Creating search engine with filtered data...")
 
         # Create search engine with access control
         search_engine = get_local_search_engine_with_access_control(
@@ -287,37 +371,82 @@ async def query(request: QueryRequest):
             text_units=text_units,
             entities=entities,
             relationships=relationships,
-            covariates={},  # Empty dict - no covariates in this example
-            response_type="Multiple Paragraphs",  # Response format
-            description_embedding_store=description_embedding_store,  # Use loaded vector store
+            covariates={},
+            response_type="Multiple Paragraphs",
+            description_embedding_store=description_embedding_store,
             user_id=user_data["id"],
             user_domains=user_data["domains"],
         )
 
-        print(f"Executing query: {request.query}")
+        print(f"\n🚀 Executing search...")
 
-        # Execute search - the search() method returns a coroutine
+        # Execute search
         result = await search_engine.search(request.query)
 
-        print(f"Query completed successfully")
+        print(f"\n✨ Query completed!")
+        print(f"  - Response length: {len(result.response)} chars")
+        print(f"  - LLM calls: {getattr(result, 'llm_calls', 'N/A')}")
+        print(f"  - Prompt tokens: {getattr(result, 'prompt_tokens', 'N/A')}")
+
+        # Debug: Inspect the result object
+        print(f"\n🔬 RESULT OBJECT INSPECTION:")
+        print(f"  - Has context_data: {hasattr(result, 'context_data')}")
+        print(f"  - Has context_text: {hasattr(result, 'context_text')}")
+        print(f"  - Has context_records: {hasattr(result, 'context_records')}")
+
+        if hasattr(result, 'context_data') and result.context_data:
+            print(f"  - context_data type: {type(result.context_data)}")
+            print(f"  - context_data keys: {result.context_data.keys() if isinstance(result.context_data, dict) else 'not a dict'}")
+            if isinstance(result.context_data, dict):
+                for key, value in result.context_data.items():
+                    if isinstance(value, list):
+                        print(f"    - {key}: {len(value)} items")
+                    else:
+                        print(f"    - {key}: {type(value)}")
+
+        if hasattr(result, 'context_text'):
+            print(f"  - context_text length: {len(result.context_text) if result.context_text else 0} chars")
+
+        if hasattr(result, 'context_records') and result.context_records:
+            print(f"  - context_records: {len(result.context_records)} items")
 
         # Get filtered counts
         stats = await get_stats(request.user_role)
 
-        # Build response with all available fields
+        # Build response - try to extract actual context data
+        context_data_info = {"text_units": 0, "entities": 0, "relationships": 0}
+
+        if hasattr(result, 'context_data') and result.context_data:
+            if isinstance(result.context_data, dict):
+                # Try common key names
+                context_data_info["text_units"] = len(result.context_data.get("sources", result.context_data.get("text_units", [])))
+                context_data_info["entities"] = len(result.context_data.get("entities", []))
+                context_data_info["relationships"] = len(result.context_data.get("relationships", result.context_data.get("relations", [])))
+
+        if hasattr(result, 'context_records') and result.context_records:
+            # Alternative: use context_records
+            context_data_info["records_used"] = len(result.context_records)
+
+        print(f"\n📦 CONTEXT DATA EXTRACTED:")
+        print(f"  {context_data_info}")
+        print(f"{'='*80}\n")
+
         response_data = {
             "answer": result.response,
-            "context_data": {
-                "text_units": len(result.context_data.get("sources", [])) if result.context_data else 0,
-                "entities": len(result.context_data.get("entities", [])) if result.context_data else 0,
-                "relationships": len(result.context_data.get("relationships", [])) if result.context_data else 0,
-            },
+            "context_data": context_data_info,
             "user_info": {
                 "role": request.user_role,
                 "name": user_data["name"],
                 "domains": user_data["domains"],
             },
             "access_stats": stats["accessible"],
+            "debug_info": {
+                "filtered_text_units": len(filtered_text_units),
+                "filtered_entities": len(filtered_entities),
+                "filtered_relationships": len(filtered_relationships),
+                "has_context_data": hasattr(result, 'context_data'),
+                "context_text_length": len(result.context_text) if hasattr(result, 'context_text') and result.context_text else 0,
+            }
         }
 
         # Add optional fields if they exist
