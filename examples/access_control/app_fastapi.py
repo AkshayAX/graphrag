@@ -23,6 +23,7 @@ logging.basicConfig(
 )
 
 from graphrag.config.load_config import load_config
+from graphrag.config.models.vector_store_schema_config import VectorStoreSchemaConfig
 from graphrag.query.factory import get_local_search_engine_with_access_control
 from graphrag.query.indexer_adapters import (
     read_indexer_entities,
@@ -225,8 +226,31 @@ def load_graphrag_data(root_path: str):
                 print(f"   ⚠️  Could not find entity description table, using: {table_name}")
 
             if table_name:
+                # Get the table to check its schema
+                table = db.open_table(table_name)
+                schema = table.schema
+
+                # Determine vector size from schema
+                vector_size = 1536  # default
+                if 'vector' in schema.names:
+                    vector_field = schema.field('vector')
+                    if hasattr(vector_field.type, 'list_size'):
+                        vector_size = vector_field.type.list_size
+
+                print(f"   Detected vector size: {vector_size}")
+
+                # Create vector store schema config
+                vector_store_config = VectorStoreSchemaConfig(
+                    id_field="id",
+                    vector_field="vector",
+                    text_field="text",
+                    attributes_field="attributes",
+                    vector_size=vector_size,
+                    index_name=table_name,
+                )
+
                 description_embedding_store = LanceDBVectorStore(
-                    collection_name=table_name,
+                    vector_store_schema_config=vector_store_config,
                 )
                 description_embedding_store.connect(db_uri=str(lancedb_dir))
                 print(f"✓ LanceDB vector store loaded: {table_name}")
