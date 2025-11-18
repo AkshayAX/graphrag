@@ -4,6 +4,7 @@
 
 """FastAPI web application demonstrating GraphRAG with access control."""
 
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -14,6 +15,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+# Enable INFO level logging to see debug messages
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 from graphrag.config.load_config import load_config
 from graphrag.query.factory import get_local_search_engine_with_access_control
