@@ -96,8 +96,11 @@ def map_query_to_entities(
                 )
             if matched:
                 matched_entities.append(matched)
-                if idx < 3:  # Log first 3 matches
-                    logger.info(f"      Match {idx+1}: {matched.title} (score: {result.score if hasattr(result, 'score') else 'N/A'})")
+                if idx < 10:  # Log first 10 matches (increased from 3)
+                    score_str = f"{result.score:.4f}" if hasattr(result, 'score') else 'N/A'
+                    desc_preview = (matched.description[:60] + "...") if matched.description else "NO DESCRIPTION"
+                    logger.info(f"      Match {idx+1}: {matched.title} (score: {score_str})")
+                    logger.info(f"         Description: {desc_preview}")
             else:
                 logger.warning(f"      Result {idx+1}: Entity ID {result.document.id} not found in entity dict")
     else:
