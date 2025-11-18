@@ -202,17 +202,27 @@ def load_graphrag_data(root_path: str):
             table_names = db.table_names()
             print(f"   Available tables: {table_names}")
 
-            # Look for entity description table (try common names)
+            # Look for entity description table (try common names and patterns)
             table_name = None
-            for name in ["entity_description_embeddings", "description_embedding", "entity_descriptions"]:
+
+            # First try exact matches
+            for name in ["entity_description_embeddings", "description_embedding", "entity_descriptions", "default-entity-description"]:
                 if name in table_names:
                     table_name = name
                     break
 
+            # If not found, look for any table containing both "entity" and "description"
+            if not table_name:
+                for name in table_names:
+                    if "entity" in name.lower() and "description" in name.lower():
+                        table_name = name
+                        print(f"   Found entity description table: {table_name}")
+                        break
+
+            # Fallback: use first table (not ideal)
             if not table_name and table_names:
-                # Use the first table if no known name found
                 table_name = table_names[0]
-                print(f"   Using first available table: {table_name}")
+                print(f"   ⚠️  Could not find entity description table, using: {table_name}")
 
             if table_name:
                 description_embedding_store = LanceDBVectorStore(
