@@ -44,8 +44,25 @@ chunks:
 # Entity extraction
 entity_extraction:
   prompt: "prompts/entity_extraction.txt"
-  entity_types: [organization,person,geo,event,technology]  # Added 'technology' for AI/research entities
-  max_gleanings: 2  # Increased from 1 to improve extraction quality
+  # Comprehensive entity types for Wikipedia-like knowledge base covering all sectors
+  entity_types: [
+    organization,      # Companies, institutions, agencies, NGOs, government bodies
+    person,           # People, executives, researchers, authors, leaders
+    geo,              # Geographic locations, cities, countries, regions, facilities
+    event,            # Events, conferences, incidents, milestones, launches
+    technology,       # Software, hardware, AI models, platforms, systems, tools
+    product,          # Products, services, offerings, solutions
+    concept,          # Abstract ideas, theories, methodologies, frameworks, principles
+    industry,         # Sectors, markets, business domains, verticals
+    metric,           # KPIs, statistics, measurements, percentages, financial figures
+    regulation,       # Laws, policies, standards, compliance requirements, guidelines
+    project,          # Initiatives, programs, research projects, campaigns
+    patent,           # Intellectual property, inventions, trademarks
+    skill,            # Competencies, capabilities, expertise areas, qualifications
+    document,         # Reports, papers, publications, studies, specifications
+    currency          # Financial instruments, money, investments, stocks
+  ]
+  max_gleanings: 2  # Two extraction passes for better quality
 
 # Local search settings
 local_search:
@@ -94,8 +111,13 @@ embed_text:
 extract_graph:
   model_id: default_chat_model
   prompt: "prompts/extract_graph.txt"
-  entity_types: [organization,person,geo,event,technology]  # Added 'technology' for AI/research entities
-  max_gleanings: 2  # Increased from 1 to improve extraction quality
+  # Same comprehensive entity types as entity_extraction
+  entity_types: [
+    organization, person, geo, event, technology,
+    product, concept, industry, metric, regulation,
+    project, patent, skill, document, currency
+  ]
+  max_gleanings: 2  # Two extraction passes for better quality
 
 summarize_descriptions:
   model_id: default_chat_model
