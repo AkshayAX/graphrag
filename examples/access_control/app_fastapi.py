@@ -24,6 +24,7 @@ from graphrag.query.indexer_adapters import (
     read_indexer_text_units,
 )
 from graphrag.vector_stores.base import BaseVectorStore, VectorStoreSearchResult
+from graphrag.vector_stores.lancedb import LanceDBVectorStore
 
 
 class MockVectorStore(BaseVectorStore):
@@ -181,10 +182,50 @@ def load_graphrag_data(root_path: str):
         reports_df, communities_df, community_level=2, config=config
     )
 
-    # Use mock vector store for simplified setup
-    # The search engine will work but won't use entity description similarity
-    print(f"⚠ Using mock vector store (entity description similarity disabled)")
-    description_embedding_store = MockVectorStore()
+    # Try to load LanceDB vector store for entity descriptions
+    lancedb_dir = output_dir / "lancedb"
+
+    if lancedb_dir.exists():
+        try:
+            import lancedb
+            print(f"📦 Loading LanceDB vector store from: {lancedb_dir}")
+
+            # Connect to LanceDB and list available tables
+            db = lancedb.connect(str(lancedb_dir))
+            table_names = db.table_names()
+            print(f"   Available tables: {table_names}")
+
+            # Look for entity description table (try common names)
+            table_name = None
+            for name in ["entity_description_embeddings", "description_embedding", "entity_descriptions"]:
+                if name in table_names:
+                    table_name = name
+                    break
+
+            if not table_name and table_names:
+                # Use the first table if no known name found
+                table_name = table_names[0]
+                print(f"   Using first available table: {table_name}")
+
+            if table_name:
+                description_embedding_store = LanceDBVectorStore(
+                    collection_name=table_name,
+                )
+                description_embedding_store.connect(db_uri=str(lancedb_dir))
+                print(f"✓ LanceDB vector store loaded: {table_name}")
+            else:
+                print(f"⚠️  No tables found in LanceDB")
+                print(f"⚠️  Using mock vector store (entity similarity disabled)")
+                description_embedding_store = MockVectorStore()
+
+        except Exception as e:
+            print(f"⚠️  Failed to load LanceDB: {e}")
+            print(f"⚠️  Falling back to mock vector store (entity similarity disabled)")
+            description_embedding_store = MockVectorStore()
+    else:
+        print(f"⚠️  LanceDB directory not found at {lancedb_dir}")
+        print(f"⚠️  Using mock vector store (entity description similarity disabled)")
+        description_embedding_store = MockVectorStore()
 
     print(f"✓ Loaded {len(text_units)} text units")
     print(f"✓ Loaded {len(entities)} entities")
