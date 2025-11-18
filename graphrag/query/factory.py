@@ -346,11 +346,12 @@ def get_local_search_engine_with_access_control(
     access_filter = AccessControlFilter(user_id=user_id, user_domains=user_domains)
 
     # Filter data based on access control
-    filtered_text_units, filtered_entities, filtered_relationships = (
+    filtered_text_units, filtered_entities, filtered_relationships, filtered_covariates = (
         access_filter.filter_context_data(
             text_units=text_units,
             entities=entities,
             relationships=relationships,
+            covariates=covariates,
         )
     )
 
@@ -366,7 +367,7 @@ def get_local_search_engine_with_access_control(
         text_units=filtered_text_units,
         entities=filtered_entities,
         relationships=filtered_relationships,
-        covariates=covariates,
+        covariates=filtered_covariates,  # Use filtered covariates
         response_type=response_type,
         description_embedding_store=description_embedding_store,
         system_prompt=system_prompt,
@@ -410,27 +411,21 @@ def get_global_search_engine_with_access_control(
     # Create access control filter
     access_filter = AccessControlFilter(user_id=user_id, user_domains=user_domains)
 
-    # Filter entities (global search primarily uses entities and community reports)
-    filtered_entities = access_filter.filter_entities_by_source(
-        entities=entities,
-        accessible_text_unit_ids=set(),  # Global search doesn't directly use text units
-    )
+    # SECURITY: Global search with access control is challenging because:
+    # 1. It doesn't use text units directly (works at community level)
+    # 2. Community reports aggregate data from all sources
+    # 3. We cannot properly filter entities without text unit access control
+    #
+    # DECISION: Disable global search for access-controlled scenarios
+    # Return empty entities and reports to prevent any data leakage
+    # Applications should use LocalSearch for access-controlled queries instead
 
-    # Note: Community reports aggregation may need special handling
-    # For now, we filter entities which affects which communities are relevant
-
-    return get_global_search_engine(
-        config=config,
-        reports=reports,
-        entities=filtered_entities,
-        communities=communities,
-        response_type=response_type,
-        dynamic_community_selection=dynamic_community_selection,
-        map_system_prompt=map_system_prompt,
-        reduce_system_prompt=reduce_system_prompt,
-        general_knowledge_inclusion_prompt=general_knowledge_inclusion_prompt,
-        callbacks=callbacks,
+    msg = (
+        "GlobalSearch is not supported with access control enabled. "
+        "Community reports aggregate data from all sources and cannot be properly filtered. "
+        "Use LocalSearch with access control instead."
     )
+    raise NotImplementedError(msg)
 
 
 def get_drift_search_engine_with_access_control(
@@ -469,18 +464,23 @@ def get_drift_search_engine_with_access_control(
     # Create access control filter
     access_filter = AccessControlFilter(user_id=user_id, user_domains=user_domains)
 
-    # Filter data based on access control
-    filtered_text_units, filtered_entities, filtered_relationships = (
+    # Filter data based on access control (DRIFT doesn't use covariates)
+    filtered_text_units, filtered_entities, filtered_relationships, _ = (
         access_filter.filter_context_data(
             text_units=text_units,
             entities=entities,
             relationships=relationships,
+            covariates=None,
         )
     )
 
+    # IMPORTANT: Disable community reports for access-controlled queries
+    # Community reports contain aggregated data from all sources and would leak restricted information
+    filtered_reports = []
+
     return get_drift_search_engine(
         config=config,
-        reports=reports,
+        reports=filtered_reports,  # Use empty reports to prevent data leakage
         text_units=filtered_text_units,
         entities=filtered_entities,
         relationships=filtered_relationships,

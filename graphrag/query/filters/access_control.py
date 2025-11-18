@@ -164,24 +164,61 @@ class AccessControlFilter:
 
         return filtered_relationships
 
+    def filter_covariates_by_source(
+        self,
+        covariates: dict[str, list] | None,
+        accessible_text_unit_ids: set[str],
+    ) -> dict[str, list]:
+        """Filter covariates (claims) based on accessible source text units.
+
+        Args:
+            covariates: Dictionary of covariate type to list of covariates
+            accessible_text_unit_ids: Set of text unit IDs the user can access
+
+        Returns:
+            Filtered dictionary of covariates
+        """
+        if not covariates or not accessible_text_unit_ids:
+            return {}
+
+        filtered_covariates = {}
+        for covariate_type, covariate_list in covariates.items():
+            filtered_list = []
+            for cov in covariate_list:
+                # Check if covariate has any text unit sources we can access
+                if hasattr(cov, "text_unit_ids") and cov.text_unit_ids:
+                    # Include covariate if ANY of its source text units are accessible
+                    if any(
+                        tu_id in accessible_text_unit_ids for tu_id in cov.text_unit_ids
+                    ):
+                        filtered_list.append(cov)
+                # SECURITY: If no source tracking, EXCLUDE by default
+
+            if filtered_list:
+                filtered_covariates[covariate_type] = filtered_list
+
+        return filtered_covariates
+
     def filter_context_data(
         self,
         text_units: list[TextUnit] | None = None,
         entities: list[Entity] | None = None,
         relationships: list[Relationship] | None = None,
-    ) -> tuple[list[TextUnit], list[Entity], list[Relationship]]:
+        covariates: dict[str, list] | None = None,
+    ) -> tuple[list[TextUnit], list[Entity], list[Relationship], dict[str, list]]:
         """Filter all context data based on access control.
 
         This is a convenience method that filters text units first, then uses
-        the accessible text unit IDs to filter entities and relationships.
+        the accessible text unit IDs to filter entities, relationships, and covariates.
 
         Args:
             text_units: List of text units
             entities: List of entities
             relationships: List of relationships
+            covariates: Dictionary of covariates by type
 
         Returns:
-            Tuple of (filtered_text_units, filtered_entities, filtered_relationships)
+            Tuple of (filtered_text_units, filtered_entities, filtered_relationships, filtered_covariates)
         """
         # Filter text units first
         filtered_text_units = (
@@ -203,4 +240,9 @@ class AccessControlFilter:
                 relationships, accessible_tu_ids
             )
 
-        return filtered_text_units, filtered_entities, filtered_relationships
+        # Filter covariates based on accessible text units
+        filtered_covariates = self.filter_covariates_by_source(
+            covariates, accessible_tu_ids
+        )
+
+        return filtered_text_units, filtered_entities, filtered_relationships, filtered_covariates

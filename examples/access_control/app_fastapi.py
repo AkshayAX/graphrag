@@ -441,11 +441,12 @@ async def query(request: QueryRequest):
         print(f"  - User domains: {user_data['domains']}")
 
         # Filter data manually to see results
-        filtered_text_units, filtered_entities, filtered_relationships = (
+        filtered_text_units, filtered_entities, filtered_relationships, _ = (
             access_filter.filter_context_data(
                 text_units=text_units,
                 entities=entities,
                 relationships=relationships,
+                covariates=None,  # No covariates in this example
             )
         )
 
