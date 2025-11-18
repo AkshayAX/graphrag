@@ -472,6 +472,15 @@ async def query(request: QueryRequest):
             for i, entity in enumerate(filtered_entities[:3]):
                 print(f"  [{i+1}] {entity.title} (type: {entity.type})")
                 print(f"      Description: {entity.description[:80] if entity.description else 'N/A'}...")
+                if hasattr(entity, 'text_unit_ids') and entity.text_unit_ids:
+                    # Show which text units this entity is from
+                    print(f"      Source text units: {len(entity.text_unit_ids)} units")
+                    # Try to find the source document
+                    for tu_id in entity.text_unit_ids[:2]:  # Show first 2
+                        source_tu = next((tu for tu in text_units if tu.id == tu_id), None)
+                        if source_tu and hasattr(source_tu, 'attributes'):
+                            source_doc = source_tu.attributes.get('source', 'unknown')
+                            print(f"         - From: {source_doc}")
 
         print(f"\n🔧 Creating search engine with filtered data...")
 
@@ -499,6 +508,33 @@ async def query(request: QueryRequest):
         print(f"  - Response length: {len(result.response)} chars")
         print(f"  - LLM calls: {getattr(result, 'llm_calls', 'N/A')}")
         print(f"  - Prompt tokens: {getattr(result, 'prompt_tokens', 'N/A')}")
+
+        # Debug: Show which text units were actually used in context
+        print(f"\n📄 TEXT UNITS USED IN CONTEXT:")
+        if hasattr(result, 'context_data') and isinstance(result.context_data, dict):
+            if 'sources' in result.context_data:
+                sources_df = result.context_data['sources']
+                if len(sources_df) > 0:
+                    print(f"  Found {len(sources_df)} text units in context:")
+                    for idx, row in sources_df.iterrows():
+                        # Try to find the original text unit to show its attributes
+                        tu_id = row.get('id', 'unknown')
+                        matching_tu = next((tu for tu in text_units if tu.id == tu_id), None)
+                        if matching_tu and hasattr(matching_tu, 'attributes'):
+                            attrs = matching_tu.attributes
+                            print(f"    [{idx+1}] ID: {tu_id[:40]}...")
+                            print(f"        Access: {attrs.get('access_type', 'unknown')}")
+                            print(f"        Domains: {attrs.get('access_domains', [])}")
+                            print(f"        Source: {attrs.get('source', 'unknown')}")
+                            print(f"        Text preview: {matching_tu.text[:100]}...")
+                        else:
+                            print(f"    [{idx+1}] ID: {tu_id[:40]}... (attributes not found)")
+                else:
+                    print(f"  ⚠️  Sources dataframe is empty!")
+            else:
+                print(f"  ⚠️  No 'sources' key in context_data")
+        else:
+            print(f"  ⚠️  No context_data or not a dict")
 
         # Debug: Inspect the result object
         print(f"\n🔬 RESULT OBJECT INSPECTION:")
