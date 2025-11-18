@@ -26,7 +26,7 @@ For each pair of related entities, extract the following information:
 ######################
 Example 1:
 
-Entity_types: [person, technology, mission, organization, location]
+Entity_types: [person, technology, mission, organization, location, event]
 Text:
 while Alex clenched his jaw, the buzz of frustration dull against the backdrop of Taylor's authoritarian certainty. It was this competitive undercurrent that kept him alert, the sense that his and Jordan's shared commitment to discovery was an unspoken rebellion against Cruz's narrowing vision of control and order.
 

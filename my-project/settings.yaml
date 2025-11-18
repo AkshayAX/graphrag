@@ -44,8 +44,8 @@ chunks:
 # Entity extraction
 entity_extraction:
   prompt: "prompts/entity_extraction.txt"
-  entity_types: [organization,person,geo,event]
-  max_gleanings: 1
+  entity_types: [organization,person,geo,event,technology]  # Added 'technology' for AI/research entities
+  max_gleanings: 2  # Increased from 1 to improve extraction quality
 
 # Local search settings
 local_search:
@@ -94,8 +94,8 @@ embed_text:
 extract_graph:
   model_id: default_chat_model
   prompt: "prompts/extract_graph.txt"
-  entity_types: [organization,person,geo,event]
-  max_gleanings: 1
+  entity_types: [organization,person,geo,event,technology]  # Added 'technology' for AI/research entities
+  max_gleanings: 2  # Increased from 1 to improve extraction quality
 
 summarize_descriptions:
   model_id: default_chat_model
