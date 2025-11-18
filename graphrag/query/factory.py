@@ -354,10 +354,15 @@ def get_local_search_engine_with_access_control(
         )
     )
 
+    # IMPORTANT: Disable community reports for access-controlled queries
+    # Community reports contain aggregated data from all sources and would leak restricted information
+    # We pass an empty list to ensure only directly accessible data is used
+    filtered_reports = []
+
     # Create search engine with filtered data
     return get_local_search_engine(
         config=config,
-        reports=reports,
+        reports=filtered_reports,  # Use empty reports to prevent data leakage
         text_units=filtered_text_units,
         entities=filtered_entities,
         relationships=filtered_relationships,

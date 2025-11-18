@@ -128,10 +128,8 @@ class AccessControlFilter:
                     tu_id in accessible_text_unit_ids for tu_id in entity.text_unit_ids
                 ):
                     filtered_entities.append(entity)
-            else:
-                # No source tracking - include by default
-                # You could change this to exclude for stricter security
-                filtered_entities.append(entity)
+            # SECURITY: If no source tracking, EXCLUDE by default to prevent data leakage
+            # Entities without source tracking cannot be verified for access control
 
         return filtered_entities
 
@@ -161,9 +159,8 @@ class AccessControlFilter:
                     tu_id in accessible_text_unit_ids for tu_id in rel.text_unit_ids
                 ):
                     filtered_relationships.append(rel)
-            else:
-                # No source tracking - include by default
-                filtered_relationships.append(rel)
+            # SECURITY: If no source tracking, EXCLUDE by default to prevent data leakage
+            # Relationships without source tracking cannot be verified for access control
 
         return filtered_relationships
 
