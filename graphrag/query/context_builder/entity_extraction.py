@@ -73,7 +73,17 @@ def map_query_to_entities(
 
         logger.info(f"   Vector search returned {len(search_results)} results")
 
-        for idx, result in enumerate(search_results):
+        # IMPORTANT: Pre-filter to only include accessible entity IDs
+        # The vector store may contain embeddings for entities that have been filtered out by access control
+        accessible_entity_ids = set(all_entities_dict.keys())
+        accessible_results = [r for r in search_results if r.document.id in accessible_entity_ids]
+
+        if len(accessible_results) < len(search_results):
+            filtered_count = len(search_results) - len(accessible_results)
+            logger.info(f"   Filtered out {filtered_count} inaccessible entities from vector results")
+            logger.info(f"   Accessible results: {len(accessible_results)}")
+
+        for idx, result in enumerate(accessible_results):
             if embedding_vectorstore_key == EntityVectorStoreKey.ID and isinstance(
                 result.document.id, str
             ):
