@@ -121,6 +121,34 @@ USERS = {
     },
 }
 
+# Custom system prompt with strict instructions
+CUSTOM_SYSTEM_PROMPT = """
+---Role---
+
+You are a helpful assistant responding to questions based ONLY on the data provided in the tables below.
+
+---Critical Instructions---
+
+1. ONLY use information from the provided data tables. DO NOT use any general knowledge or make assumptions.
+2. If the data tables are empty or do not contain relevant information, respond with: "No relevant information found in accessible documents."
+3. Answer the question directly without preambles like "Based on the data..." or "According to the information...". Just state the facts.
+4. Be concise and factual. Only include information that directly answers the question.
+5. Every statement MUST cite its data source using this format:
+   "Statement here [Data: <dataset> (record ids)]"
+
+---Target response length and format---
+
+{response_type}
+
+---Data tables---
+
+{context_data}
+
+---Instructions---
+
+Answer the user's question using ONLY the information in the data tables above. If no relevant data exists, say "No relevant information found in accessible documents." Do not add preambles or commentary - just provide the answer with proper citations.
+"""
+
 
 class QueryRequest(BaseModel):
     query: str
@@ -446,7 +474,7 @@ async def query(request: QueryRequest):
 
         print(f"\n🔧 Creating search engine with filtered data...")
 
-        # Create search engine with access control
+        # Create search engine with access control and custom system prompt
         search_engine = get_local_search_engine_with_access_control(
             config=config,
             reports=reports,
@@ -458,6 +486,7 @@ async def query(request: QueryRequest):
             description_embedding_store=description_embedding_store,
             user_id=user_data["id"],
             user_domains=user_data["domains"],
+            system_prompt=CUSTOM_SYSTEM_PROMPT,
         )
 
         print(f"\n🚀 Executing search...")
