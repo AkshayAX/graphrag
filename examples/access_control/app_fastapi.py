@@ -466,21 +466,63 @@ async def query(request: QueryRequest):
         else:
             print(f"\n⚠️  NO TEXT UNITS ACCESSIBLE TO THIS USER!")
 
+        # 🚨 CRITICAL DIAGNOSTIC: Check for entities from research_reports
+        print(f"\n🔬 ENTITIES FROM RESEARCH_REPORTS:")
+        research_entities = []
+        for entity in filtered_entities:
+            if hasattr(entity, 'text_unit_ids') and entity.text_unit_ids:
+                for tu_id in entity.text_unit_ids:
+                    source_tu = next((tu for tu in text_units if tu.id == tu_id), None)
+                    if source_tu and hasattr(source_tu, 'attributes'):
+                        if source_tu.attributes.get('source') == 'research_reports':
+                            research_entities.append((entity, source_tu))
+                            break
+
+        if research_entities:
+            print(f"  ✅ Found {len(research_entities)} entities from research_reports:")
+            for i, (entity, source_tu) in enumerate(research_entities[:5]):
+                print(f"  [{i+1}] {entity.title} (type: {entity.type})")
+                print(f"      Description: {entity.description if entity.description else 'NO DESCRIPTION'}...")
+                print(f"      Text unit preview: {source_tu.text[:100]}...")
+        else:
+            print(f"  ⚠️  NO ENTITIES FOUND FROM RESEARCH_REPORTS!")
+            print(f"  This is why doc006 never appears in search results!")
+            print(f"\n  Possible reasons:")
+            print(f"    1. Indexing didn't extract entities from doc006")
+            print(f"    2. Entity extraction failed on that document")
+            print(f"    3. The source document doesn't exist or wasn't indexed")
+
+            # Check if research_reports text units exist at all
+            research_tus = [tu for tu in filtered_text_units if tu.attributes.get('source') == 'research_reports']
+            if research_tus:
+                print(f"\n  📄 But we DO have {len(research_tus)} text units from research_reports!")
+                print(f"  This means: Entities were NOT extracted from those text units")
+                print(f"\n  Sample text unit from research_reports:")
+                sample_tu = research_tus[0]
+                print(f"    ID: {sample_tu.id}")
+                print(f"    Text: {sample_tu.text[:200]}...")
+            else:
+                print(f"\n  Also NO text units from research_reports accessible to this user")
+
         # Show sample of filtered entities
         if filtered_entities:
-            print(f"\n🏷️  SAMPLE ENTITIES (first 3):")
-            for i, entity in enumerate(filtered_entities[:3]):
-                print(f"  [{i+1}] {entity.title} (type: {entity.type})")
-                print(f"      Description: {entity.description[:80] if entity.description else 'N/A'}...")
+            print(f"\n🏷️  ALL ACCESSIBLE ENTITIES ({len(filtered_entities)} total):")
+            print(f"  Showing all entity titles and their sources:")
+            entity_sources = {}
+            for entity in filtered_entities:
+                sources = set()
                 if hasattr(entity, 'text_unit_ids') and entity.text_unit_ids:
-                    # Show which text units this entity is from
-                    print(f"      Source text units: {len(entity.text_unit_ids)} units")
-                    # Try to find the source document
-                    for tu_id in entity.text_unit_ids[:2]:  # Show first 2
+                    for tu_id in entity.text_unit_ids:
                         source_tu = next((tu for tu in text_units if tu.id == tu_id), None)
                         if source_tu and hasattr(source_tu, 'attributes'):
-                            source_doc = source_tu.attributes.get('source', 'unknown')
-                            print(f"         - From: {source_doc}")
+                            sources.add(source_tu.attributes.get('source', 'unknown'))
+                entity_sources[entity.title] = sources
+
+            for title, sources in list(entity_sources.items())[:15]:
+                print(f"    - {title}: from {', '.join(sources)}")
+
+            if len(entity_sources) > 15:
+                print(f"    ... and {len(entity_sources) - 15} more entities")
 
         print(f"\n🔧 Creating search engine with filtered data...")
 
